@@ -198,13 +198,33 @@ setup_environment() {
 
     cd "$project_dir"
 
-    # Créer l'environnement virtuel s'il n'existe pas
-    if [[ ! -d ".zen_venv" ]]; then
-        print_info "Création de l'environnement virtuel..."
+    # Vérifier si l'environnement virtuel existe ET est valide
+    local venv_valid=false
+    if [[ -d ".zen_venv" ]] && [[ -f ".zen_venv/bin/activate" ]]; then
+        venv_valid=true
+        print_success "Environnement virtuel déjà existant et valide"
+    fi
+
+    # Créer ou recréer l'environnement virtuel si nécessaire
+    if [[ "$venv_valid" == false ]]; then
+        if [[ -d ".zen_venv" ]]; then
+            print_warning "Environnement virtuel existant mais corrompu, recréation..."
+            rm -rf .zen_venv
+        else
+            print_info "Création de l'environnement virtuel..."
+        fi
+
         $python_cmd -m venv .zen_venv
+
+        if [[ ! -f ".zen_venv/bin/activate" ]]; then
+            print_error "Échec de la création de l'environnement virtuel"
+            echo ""
+            echo "Essayez manuellement :"
+            echo "  $python_cmd -m venv .zen_venv"
+            return 1
+        fi
+
         print_success "Environnement virtuel créé"
-    else
-        print_success "Environnement virtuel déjà existant"
     fi
 
     # Activer l'environnement virtuel
